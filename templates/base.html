@@ -1,0 +1,84 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{% block title %}CodeLens — Analyseur de dépôts GitHub{% endblock %}</title>
+    <!-- Feuille de style personnalisée CodeLens -->
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+    <!-- Chart.js pour les graphiques -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
+    <!-- Polices modernes Google Fonts (Inter) -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+</head>
+<body>
+    <!-- En-tête et Navigation -->
+    <header class="navbar">
+        <div class="nav-container">
+            <a href="{{ url_for('index') }}" class="nav-brand">
+                <span class="brand-icon">🔍</span>
+                <span class="brand-text">Code<strong>Lens</strong></span>
+                <span class="brand-tag">L3 MIAGE</span>
+            </a>
+            <nav class="nav-menu">
+                <a href="{{ url_for('index') }}" class="nav-link {% if request.endpoint == 'index' %}active{% endif %}">
+                    <span>Accueil</span>
+                </a>
+                <a href="{{ url_for('history') }}" class="nav-link {% if request.endpoint == 'history' %}active{% endif %}">
+                    <span>Historique</span>
+                </a>
+                <a href="{{ url_for('about') }}" class="nav-link {% if request.endpoint == 'about' %}active{% endif %}">
+                    <span>À propos</span>
+                </a>
+            </nav>
+        </div>
+    </header>
+
+    <!-- Messages Flash pour les notifications -->
+    <div class="container messages-container">
+        {% with messages = get_flashed_messages(with_categories=true) %}
+            {% if messages %}
+                {% for category, message in messages %}
+                    <div class="alert alert-{{ category }}">
+                        <span class="alert-icon">
+                            {% if category == 'danger' %}⚠️
+                            {% elif category == 'warning' %}🔔
+                            {% elif category == 'info' %}ℹ️
+                            {% else %}✅{% endif %}
+                        </span>
+                        <span class="alert-text">{{ message }}</span>
+                        <button class="alert-close" onclick="this.parentElement.remove()">✕</button>
+                    </div>
+                {% endfor %}
+            {% endif %}
+        {% endwith %}
+    </div>
+
+    <!-- Contenu Principal -->
+    <main class="main-content">
+        {% block content %}{% endblock %}
+    </main>
+
+    <!-- Pied de page -->
+    <footer class="footer">
+        <div class="container footer-content">
+            <div class="footer-left">
+                <p><strong>CodeLens</strong> — Analyseur de dépôts GitHub</p>
+                <p class="footer-sub">Projet universitaire L3 MIAGE / MIASHS • Université Toulouse III – Paul Sabatier</p>
+            </div>
+            <div class="footer-right">
+                <span class="tech-pill">Python 3</span>
+                <span class="tech-pill">Flask</span>
+                <span class="tech-pill">SQLite</span>
+                <span class="tech-pill">Chart.js</span>
+            </div>
+        </div>
+    </footer>
+
+    <!-- Scripts Javascript -->
+    <script src="{{ url_for('static', filename='js/main.js') }}"></script>
+    {% block scripts %}{% endblock %}
+</body>
+</html>

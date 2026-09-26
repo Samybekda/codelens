@@ -1,0 +1,150 @@
+{% extends "base.html" %}
+
+{% block title %}CodeLens — Accueil | Analyseur de dépôts GitHub{% endblock %}
+
+{% block content %}
+<div class="hero-section">
+    <div class="container hero-container">
+        <div class="hero-badge">
+            <span class="badge-dot"></span>
+            Projet Académique L3 MIAGE / MIASHS — Université Toulouse III
+        </div>
+
+        <h1 class="hero-title">
+            <span class="gradient-text">CodeLens</span>
+        </h1>
+        <p class="hero-subtitle">
+            Analysez rapidement la structure et la composition d'un dépôt GitHub.
+        </p>
+
+        <!-- Formulaire principal de saisie d'URL -->
+        <div class="search-card">
+            <form action="{{ url_for('analyze') }}" method="POST" class="search-form" id="analyzeForm">
+                <div class="input-wrapper">
+                    <span class="input-icon">🔗</span>
+                    <input 
+                        type="text" 
+                        name="repo_url" 
+                        id="repoUrlInput"
+                        placeholder="Ex : https://github.com/pallets/flask" 
+                        required 
+                        autocomplete="off"
+                        autofocus
+                    >
+                    <button type="submit" class="btn btn-primary" id="submitBtn">
+                        <span class="btn-text">Analyser le dépôt</span>
+                        <span class="btn-icon">⚡</span>
+                    </button>
+                </div>
+            </form>
+
+            <!-- Indicateur de chargement discret (masqué par défaut) -->
+            <div id="loadingIndicator" class="loading-state" style="display: none;">
+                <div class="spinner"></div>
+                <p>Connexion à l'API GitHub et analyse du dépôt en cours... Veuillez patienter quelques instants.</p>
+            </div>
+
+            <!-- Suggestions de dépôts pour la démo en soutenance -->
+            <div class="demo-suggestions">
+                <span class="suggestions-label">Suggestions pour tester :</span>
+                <div class="suggestion-pills">
+                    {% for repo in demo_repos %}
+                        <button type="button" class="pill-btn" onclick="fillAndSubmit('{{ repo.url }}')">
+                            <strong>{{ repo.name }}</strong>
+                            <small class="pill-desc">({{ repo.desc }})</small>
+                        </button>
+                    {% endfor %}
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Présentation des fonctionnalités clés -->
+<div class="container features-section">
+    <h2 class="section-title">Ce que CodeLens analyse pour vous</h2>
+    <div class="features-grid">
+        <div class="feature-card">
+            <div class="feature-icon">📊</div>
+            <h3>1. Informations & Métriques</h3>
+            <p>Étoiles, forks, watchers, taille, visibilité, dates de création et de dernière mise à jour.</p>
+        </div>
+        <div class="feature-card">
+            <div class="feature-icon">🌳</div>
+            <h3>2. Structure & Arborescence</h3>
+            <p>Visualisation de l'arbre des fichiers, calcul de la profondeur et du nombre de dossiers.</p>
+        </div>
+        <div class="feature-card">
+            <div class="feature-icon">🎨</div>
+            <h3>3. Langages de programmation</h3>
+            <p>Détection par extensions (.py, .js, .html...), calcul des pourcentages et graphique Chart.js.</p>
+        </div>
+        <div class="feature-card">
+            <div class="feature-icon">📦</div>
+            <h3>4. Dépendances logicielles</h3>
+            <p>Extraction des paquets déclarés dans requirements.txt, package.json, pom.xml, composer.json.</p>
+        </div>
+        <div class="feature-card">
+            <div class="feature-icon">📈</div>
+            <h3>5. Statistiques & Activité Git</h3>
+            <p>Dernier commit (auteur, date, message), historique d'activité mensuel et contributeurs.</p>
+        </div>
+        <div class="feature-card">
+            <div class="feature-icon">⚠️</div>
+            <h3>6. Fichiers complexes & README</h3>
+            <p>Détection des fichiers volumineux (>200 lignes, >10 fonctions) et audit de la documentation.</p>
+        </div>
+    </div>
+</div>
+
+<!-- Dernières analyses stockées dans SQLite -->
+{% if recent %}
+<div class="container recent-section">
+    <div class="section-header">
+        <h2 class="section-title">Dernières analyses effectuées</h2>
+        <a href="{{ url_for('history') }}" class="view-all-link">Voir tout l'historique →</a>
+    </div>
+    <div class="recent-grid">
+        {% for a in recent %}
+            <div class="recent-card">
+                <div class="recent-card-top">
+                    <span class="repo-owner">{{ a.owner or 'GitHub' }} /</span>
+                    <h3 class="repo-name">{{ a.repository_name }}</h3>
+                </div>
+                <div class="recent-card-langs">
+                    <span class="badge badge-lang">{{ a.languages }}</span>
+                </div>
+                <div class="recent-card-stats">
+                    <span>📄 {{ a.file_count }} fichiers</span>
+                    <span>💾 {{ a.commit_count }} commits</span>
+                </div>
+                <div class="recent-card-footer">
+                    <span class="date-text">🕒 {{ a.analysis_date }}</span>
+                    <a href="{{ url_for('view_analysis', analysis_id=a.id) }}" class="btn btn-sm btn-outline">
+                        Voir l'analyse
+                    </a>
+                </div>
+            </div>
+        {% endfor %}
+    </div>
+</div>
+{% endif %}
+{% endblock %}
+
+{% block scripts %}
+<script>
+    // Remplit le champ et soumet le formulaire pour les boutons de démonstration
+    function fillAndSubmit(url) {
+        const input = document.getElementById('repoUrlInput');
+        input.value = url;
+        document.getElementById('analyzeForm').submit();
+    }
+
+    // Affiche un indicateur de chargement lors de la soumission
+    document.getElementById('analyzeForm').addEventListener('submit', function() {
+        document.getElementById('loadingIndicator').style.display = 'flex';
+        document.getElementById('submitBtn').disabled = true;
+        document.getElementById('submitBtn').classList.add('loading');
+    });
+</script>
+{% endblock %}
