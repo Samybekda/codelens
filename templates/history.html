@@ -1,0 +1,121 @@
+{% extends "base.html" %}
+
+{% block title %}CodeLens — Historique des analyses{% endblock %}
+
+{% block content %}
+<div class="container history-container">
+
+    <div class="page-header">
+        <div>
+            <h1 class="page-title">Historique des analyses</h1>
+            <p class="page-subtitle">Retrouvez toutes les analyses de dépôts précédemment enregistrées dans la base SQLite.</p>
+        </div>
+        <a href="{{ url_for('index') }}" class="btn btn-primary">
+            <span>+ Nouvelle analyse</span>
+        </a>
+    </div>
+
+    {% if analyses %}
+        <!-- Barre de recherche rapide en direct (Vanilla JS) -->
+        <div class="filter-bar">
+            <span class="filter-icon">🔍</span>
+            <input 
+                type="text" 
+                id="searchFilter" 
+                placeholder="Filtrer par nom de dépôt ou langage..." 
+                onkeyup="filterAnalysesTable()"
+            >
+            <span class="count-badge" id="visibleCount">{{ analyses|length }} analyse(s)</span>
+        </div>
+
+        <div class="card table-card">
+            <div class="table-responsive">
+                <table class="data-table" id="historyTable">
+                    <thead>
+                        <tr>
+                            <th>Date</th>
+                            <th>Dépôt</th>
+                            <th>Langages principaux</th>
+                            <th>Fichiers</th>
+                            <th>Commits</th>
+                            <th>Contributeurs</th>
+                            <th class="text-right">Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for a in analyses %}
+                            <tr class="history-row">
+                                <td class="date-cell">
+                                    <span class="date-main">{{ a.analysis_date[:10] }}</span>
+                                    <small class="date-sub">{{ a.analysis_date[11:16] }}</small>
+                                </td>
+                                <td>
+                                    <div class="repo-cell">
+                                        <a href="{{ url_for('view_analysis', analysis_id=a.id) }}" class="repo-link">
+                                            <strong>{{ a.repository_name }}</strong>
+                                        </a>
+                                        <span class="repo-owner-small">{{ a.owner or 'GitHub' }}</span>
+                                    </div>
+                                </td>
+                                <td>
+                                    <span class="lang-text">{{ a.languages }}</span>
+                                </td>
+                                <td>{{ a.file_count }}</td>
+                                <td>{{ a.commit_count }}</td>
+                                <td>{{ a.contributor_count }}</td>
+                                <td class="text-right actions-cell">
+                                    <a href="{{ url_for('view_analysis', analysis_id=a.id) }}" class="btn btn-sm btn-outline">
+                                        Consulter
+                                    </a>
+                                    <form action="{{ url_for('delete_history_item', analysis_id=a.id) }}" method="POST" style="display:inline;" onsubmit="return confirm('Confirmer la suppression de cette analyse ?');">
+                                        <button type="submit" class="btn btn-sm btn-danger-outline" title="Supprimer">
+                                            ✕
+                                        </button>
+                                    </form>
+                                </td>
+                            </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    {% else %}
+        <div class="card empty-history-card">
+            <div class="empty-icon">📁</div>
+            <h3>Aucune analyse enregistrée</h3>
+            <p>Vous n'avez pas encore analysé de dépôt GitHub. Entrez une URL sur la page d'accueil pour générer votre premier rapport.</p>
+            <a href="{{ url_for('index') }}" class="btn btn-primary" style="margin-top: 1rem;">
+                Commencer une analyse
+            </a>
+        </div>
+    {% endif %}
+
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+    // Filtre dynamique en Vanilla JS pour la table d'historique
+    function filterAnalysesTable() {
+        const input = document.getElementById("searchFilter");
+        const filter = input.value.toLowerCase();
+        const rows = document.querySelectorAll(".history-row");
+        let visible = 0;
+
+        rows.forEach(row => {
+            const text = row.textContent.toLowerCase();
+            if (text.includes(filter)) {
+                row.style.display = "";
+                visible++;
+            } else {
+                row.style.display = "none";
+            }
+        });
+
+        const badge = document.getElementById("visibleCount");
+        if (badge) {
+            badge.textContent = visible + " analyse(s)";
+        }
+    }
+</script>
+{% endblock %}

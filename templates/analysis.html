@@ -1,0 +1,392 @@
+{% extends "base.html" %}
+
+{% block title %}CodeLens — Analyse de {{ repo_info.name }}{% endblock %}
+
+{% block content %}
+<div class="container analysis-container">
+
+    <!-- En-tête principal du Dépôt -->
+    <div class="repo-header-card">
+        <div class="repo-header-main">
+            {% if repo_info.owner_avatar %}
+                <img src="{{ repo_info.owner_avatar }}" alt="{{ repo_info.owner }}" class="owner-avatar">
+            {% else %}
+                <div class="owner-avatar-placeholder">👤</div>
+            {% endif %}
+            <div class="repo-header-info">
+                <div class="repo-breadcrumb">
+                    <a href="{{ repo_info.owner_url or '#' }}" target="_blank" class="owner-link">{{ repo_info.owner }}</a>
+                    <span class="breadcrumb-separator">/</span>
+                    <h1 class="repo-title-heading">{{ repo_info.name }}</h1>
+                    <span class="badge badge-visibility">{{ repo_info.visibility }}</span>
+                </div>
+                <p class="repo-description">{{ repo_info.description }}</p>
+                <div class="repo-meta-tags">
+                    <span class="meta-tag">🌿 Branche : <strong>{{ repo_info.default_branch }}</strong></span>
+                    <span class="meta-tag">⚖️ Licence : <strong>{{ repo_info.license }}</strong></span>
+                    <span class="meta-tag">📅 Créé le : {{ repo_info.created_at[:10] if repo_info.created_at else 'Inconnu' }}</span>
+                    <span class="meta-tag">🔄 Dernier push : {{ repo_info.pushed_at[:10] if repo_info.pushed_at else 'Inconnu' }}</span>
+                </div>
+            </div>
+        </div>
+        <div class="repo-header-actions">
+            <a href="{{ repo_info.html_url }}" target="_blank" class="btn btn-primary" rel="noopener">
+                <span>Voir sur GitHub</span>
+                <span class="btn-external-icon">↗</span>
+            </a>
+            <span class="analysis-timestamp">Analyse enregistrée le {{ analysis_date }}</span>
+        </div>
+    </div>
+
+    <!-- Section 8 : Rapport CodeLens (Factuel & Pédagogique) -->
+    <div class="report-box card">
+        <div class="report-header">
+            <div class="report-title-group">
+                <span class="report-badge">📋 Synthèse</span>
+                <h2 class="report-title">Rapport CodeLens</h2>
+            </div>
+            <span class="report-status-badge">✓ {{ report.status_title }}</span>
+        </div>
+        
+        <div class="checklist-grid">
+            {% for item in report.checklist %}
+                <div class="checklist-item {% if item.ok %}item-success{% else %}item-warning{% endif %}">
+                    <span class="check-icon">{% if item.ok %}✓{% else %}–{% endif %}</span>
+                    <span class="check-label">{{ item.label }}</span>
+                </div>
+            {% endfor %}
+        </div>
+
+        <div class="report-points">
+            <h4 class="points-title">Points clés à retenir :</h4>
+            <ul class="points-list">
+                {% for point in report.points %}
+                    <li>{{ point }}</li>
+                {% endfor %}
+            </ul>
+        </div>
+    </div>
+
+    <!-- Cartes Métriques Rapides -->
+    <div class="quick-stats-grid">
+        <div class="stat-card">
+            <div class="stat-icon-wrapper star-color">⭐</div>
+            <div class="stat-content">
+                <span class="stat-value">{{ repo_info.stars_count }}</span>
+                <span class="stat-label">Étoiles (Stars)</span>
+            </div>
+        </div>
+        <div class="stat-card">
+            <div class="stat-icon-wrapper fork-color">🍴</div>
+            <div class="stat-content">
+                <span class="stat-value">{{ repo_info.forks_count }}</span>
+                <span class="stat-label">Forks</span>
+            </div>
+        </div>
+        <div class="stat-card">
+            <div class="stat-icon-wrapper watch-color">👁️</div>
+            <div class="stat-content">
+                <span class="stat-value">{{ repo_info.watchers_count }}</span>
+                <span class="stat-label">Watchers</span>
+            </div>
+        </div>
+        <div class="stat-card">
+            <div class="stat-icon-wrapper file-color">📄</div>
+            <div class="stat-content">
+                <span class="stat-value">{{ stats.file_count }}</span>
+                <span class="stat-label">Fichiers totaux</span>
+            </div>
+        </div>
+        <div class="stat-card">
+            <div class="stat-icon-wrapper commit-color">💾</div>
+            <div class="stat-content">
+                <span class="stat-value">{{ stats.commit_count }}</span>
+                <span class="stat-label">Commits estimés</span>
+            </div>
+        </div>
+        <div class="stat-card">
+            <div class="stat-icon-wrapper contrib-color">👥</div>
+            <div class="stat-content">
+                <span class="stat-value">{{ stats.contributor_count }}</span>
+                <span class="stat-label">Contributeurs</span>
+            </div>
+        </div>
+    </div>
+
+    <!-- Grille 2 colonnes : Langages & Structure -->
+    <div class="dashboard-grid-2">
+        <!-- Section 3 : Langages Utilisés -->
+        <div class="card card-languages">
+            <div class="card-header">
+                <h3 class="card-title">🎨 Langages utilisés</h3>
+                <span class="card-badge">{{ languages|length }} détecté(s)</span>
+            </div>
+            
+            {% if languages %}
+                <div class="chart-wrapper">
+                    <canvas id="languagesChart" height="230"></canvas>
+                </div>
+                <div class="languages-table-wrapper">
+                    <table class="data-table">
+                        <thead>
+                            <tr>
+                                <th>Langage</th>
+                                <th>Pourcentage</th>
+                                <th>Fichiers</th>
+                                <th>Volume</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for lang in languages %}
+                                <tr>
+                                    <td>
+                                        <span class="lang-color-indicator lang-color-{{ loop.index0 % 8 }}"></span>
+                                        <strong>{{ lang.name }}</strong>
+                                    </td>
+                                    <td>
+                                        <div class="progress-cell">
+                                            <span class="pct-num">{{ lang.percentage }} %</span>
+                                            <div class="mini-progress-bar">
+                                                <div class="mini-progress-fill lang-fill-{{ loop.index0 % 8 }}" style="width: {{ lang.percentage }}%;"></div>
+                                            </div>
+                                        </div>
+                                    </td>
+                                    <td>{{ lang.count }}</td>
+                                    <td>{{ lang.size_bytes | filesize_format }}</td>
+                                </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            {% else %}
+                <p class="empty-state">Aucun fichier source avec une extension reconnue n'a été trouvé.</p>
+            {% endif %}
+        </div>
+
+        <!-- Section 2 : Structure du Dépôt -->
+        <div class="card card-structure">
+            <div class="card-header">
+                <h3 class="card-title">🌳 Structure du dépôt</h3>
+                <span class="card-badge">Profondeur : {{ structure.max_depth or 1 }}</span>
+            </div>
+
+            <div class="structure-metrics">
+                <div class="metric-pill">
+                    <span class="pill-number">{{ stats.file_count }}</span>
+                    <span class="pill-name">fichiers</span>
+                </div>
+                <div class="metric-pill">
+                    <span class="pill-number">{{ stats.folder_count }}</span>
+                    <span class="pill-name">dossiers</span>
+                </div>
+                <div class="metric-pill">
+                    <span class="pill-number">{{ structure.max_depth }}</span>
+                    <span class="pill-name">niveaux de profondeur</span>
+                </div>
+                <div class="metric-pill">
+                    <span class="pill-number">{{ repo_info.size_kb }} Ko</span>
+                    <span class="pill-name">taille déclarée</span>
+                </div>
+            </div>
+
+            <h4 class="subcard-title">Arborescence principale :</h4>
+            <div class="tree-display">
+                <pre><code>{{ structure.tree_representation }}</code></pre>
+            </div>
+            {% if is_truncated %}
+                <small class="text-muted">⚠️ L'arborescence a été tronquée par GitHub car le dépôt contient un volume exceptionnel de fichiers.</small>
+            {% endif %}
+        </div>
+    </div>
+
+    <!-- Section 5 : Statistiques Git & Activité Récente -->
+    <div class="card card-git-stats">
+        <div class="card-header">
+            <h3 class="card-title">📈 Activité et Historique Git</h3>
+            <span class="card-badge">{{ git_stats.branch_count or 1 }} branche(s)</span>
+        </div>
+
+        <div class="git-overview-grid">
+            <!-- Carte Dernier Commit -->
+            <div class="git-latest-commit-box">
+                <h4 class="subcard-title">Dernier commit</h4>
+                {% if git_stats.latest_commit %}
+                    <div class="commit-detail">
+                        <div class="commit-message">
+                            <strong>{{ git_stats.latest_commit.message }}</strong>
+                        </div>
+                        <div class="commit-meta">
+                            <span>Auteur : <strong>{{ git_stats.latest_commit.author_name }}</strong></span>
+                            <span>Date : <strong>{{ git_stats.latest_commit.date }}</strong></span>
+                            <span class="commit-sha">SHA : <code>{{ git_stats.latest_commit.sha }}</code></span>
+                        </div>
+                    </div>
+                {% else %}
+                    <p class="empty-state">Aucun historique de commit récent disponible.</p>
+                {% endif %}
+            </div>
+
+            <!-- Graphique d'activité mensuelle -->
+            <div class="git-chart-box">
+                <h4 class="subcard-title">Activité récente (Commits par période)</h4>
+                <div class="chart-wrapper">
+                    <canvas id="commitsChart" height="180"></canvas>
+                </div>
+            </div>
+        </div>
+
+        <!-- Contributeurs principaux -->
+        {% if git_stats.top_contributors %}
+            <h4 class="subcard-title" style="margin-top: 1.5rem;">Principaux contributeurs :</h4>
+            <div class="contributors-row">
+                {% for contrib in git_stats.top_contributors %}
+                    <a href="{{ contrib.html_url }}" target="_blank" class="contributor-pill" title="{{ contrib.login }}">
+                        {% if contrib.avatar_url %}
+                            <img src="{{ contrib.avatar_url }}" alt="{{ contrib.login }}" class="contrib-avatar">
+                        {% endif %}
+                        <div class="contrib-info">
+                            <span class="contrib-login">{{ contrib.login }}</span>
+                            <span class="contrib-count">{{ contrib.contributions }} commit(s)</span>
+                        </div>
+                    </a>
+                {% endfor %}
+            </div>
+        {% endif %}
+    </div>
+
+    <!-- Section 6 : Fichiers Nécessitant une Attention Particulière (Complexes) -->
+    <div class="card card-complex-files">
+        <div class="card-header">
+            <h3 class="card-title">⚠️ Fichiers nécessitant une attention particulière</h3>
+            <span class="card-badge badge-warning">{{ complex_files|length }} fichier(s) sensible(s)</span>
+        </div>
+        <p class="card-explanation">
+            Règles de détection transparentes : fichiers dépassant <strong>{{ thresholds.line }} lignes</strong>, 
+            <strong>{{ thresholds.function }} fonctions</strong> ou <strong>{{ thresholds.class }} classes</strong>.
+        </p>
+
+        {% if complex_files %}
+            <div class="complex-files-grid">
+                {% for f in complex_files %}
+                    <div class="complex-file-card">
+                        <div class="complex-file-header">
+                            <span class="complex-file-name">📄 {{ f.filename }}</span>
+                        </div>
+                        <div class="complex-file-stats">
+                            <span class="metric-badge"><strong>{{ f.line_count }}</strong> lignes</span>
+                            <span class="metric-badge"><strong>{{ f.function_count }}</strong> fonctions</span>
+                            <span class="metric-badge"><strong>{{ f.class_count }}</strong> classes</span>
+                        </div>
+                        <div class="complex-reasons">
+                            {% for r in f.reasons %}
+                                <span class="reason-tag">⚠️ {{ r }}</span>
+                            {% endfor %}
+                        </div>
+                    </div>
+                {% endfor %}
+            </div>
+        {% else %}
+            <div class="empty-state empty-state-success">
+                ✅ Aucun fichier parmi ceux analysés ne dépasse les seuils de complexité fixés.
+            </div>
+        {% endif %}
+    </div>
+
+    <!-- Grille 2 colonnes : Dépendances & README -->
+    <div class="dashboard-grid-2">
+        <!-- Section 4 : Dépendances -->
+        <div class="card card-dependencies">
+            <div class="card-header">
+                <h3 class="card-title">📦 Dépendances détectées</h3>
+                <span class="card-badge">{{ dependencies|length }} manifeste(s)</span>
+            </div>
+
+            {% if dependencies %}
+                {% for dep in dependencies %}
+                    <div class="dep-ecosystem-box">
+                        <div class="dep-eco-title">
+                            <span class="dep-badge">{{ dep.ecosystem }}</span>
+                            <span class="dep-filename">Fichier : <code>{{ dep.filename }}</code></span>
+                        </div>
+                        {% if dep.packages %}
+                            <div class="packages-list">
+                                {% for pkg in dep.packages %}
+                                    <span class="pkg-tag">{{ pkg }}</span>
+                                {% endfor %}
+                            </div>
+                        {% else %}
+                            <p class="empty-state-sm">Aucun paquet direct n'a pu être extrait du manifeste.</p>
+                        {% endif %}
+                    </div>
+                {% endfor %}
+            {% else %}
+                <p class="empty-state">Aucun fichier de dépendances classique (requirements.txt, package.json, pom.xml...) n'a été détecté.</p>
+            {% endif %}
+        </div>
+
+        <!-- Section 7 : Analyse du README -->
+        <div class="card card-readme">
+            <div class="card-header">
+                <h3 class="card-title">📖 Audit du README</h3>
+                <span class="card-badge {% if readme_audit.present %}badge-success{% else %}badge-danger{% endif %}">
+                    {% if readme_audit.present %}Présent{% else %}Absent{% endif %}
+                </span>
+            </div>
+
+            {% if readme_audit.present %}
+                <div class="readme-stats-box">
+                    <p class="readme-lines-info">
+                        Le fichier de documentation contient <strong>{{ readme_audit.line_count }}</strong> lignes.
+                    </p>
+                    <div class="readme-checklist">
+                        <div class="readme-check-row {% if readme_audit.has_installation %}check-ok{% else %}check-missing{% endif %}">
+                            <span class="check-symbol">{% if readme_audit.has_installation %}✓{% else %}✗{% endif %}</span>
+                            <span class="check-title">Section Installation</span>
+                            <span class="check-hint">Instructions de déploiement et prérequis</span>
+                        </div>
+                        <div class="readme-check-row {% if readme_audit.has_usage %}check-ok{% else %}check-missing{% endif %}">
+                            <span class="check-symbol">{% if readme_audit.has_usage %}✓{% else %}✗{% endif %}</span>
+                            <span class="check-title">Section Utilisation</span>
+                            <span class="check-hint">Guide de démarrage et exemples d'exécution</span>
+                        </div>
+                        <div class="readme-check-row {% if readme_audit.has_contributing %}check-ok{% else %}check-missing{% endif %}">
+                            <span class="check-symbol">{% if readme_audit.has_contributing %}✓{% else %}✗{% endif %}</span>
+                            <span class="check-title">Section Contribution</span>
+                            <span class="check-hint">Directives pour participer au code source</span>
+                        </div>
+                    </div>
+                </div>
+            {% else %}
+                <div class="empty-state empty-state-warning">
+                    ⚠️ Ce dépôt ne comporte aucun fichier README à sa racine. Une bonne documentation est fortement recommandée pour faciliter la réutilisation du code.
+                </div>
+            {% endif %}
+        </div>
+    </div>
+
+    <!-- Boutons d'actions et de retour -->
+    <div class="actions-bottom">
+        <a href="{{ url_for('index') }}" class="btn btn-outline">← Analyser un autre dépôt</a>
+        <a href="{{ url_for('history') }}" class="btn btn-secondary">Consulter l'historique</a>
+    </div>
+
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script src="{{ url_for('static', filename='js/charts.js') }}"></script>
+<script>
+    // Données transmises depuis Python/Flask pour initialiser Chart.js
+    const languagesData = {{ languages | tojson | safe }};
+    const commitsMonthlyData = {{ git_stats.monthly_activity | default({'labels': [], 'data': []}) | tojson | safe }};
+
+    document.addEventListener("DOMContentLoaded", function() {
+        if (typeof initLanguagesChart === "function" && languagesData.length > 0) {
+            initLanguagesChart("languagesChart", languagesData);
+        }
+        if (typeof initCommitsChart === "function" && commitsMonthlyData.labels.length > 0) {
+            initCommitsChart("commitsChart", commitsMonthlyData);
+        }
+    });
+</script>
+{% endblock %}
