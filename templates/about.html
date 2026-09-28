@@ -1,0 +1,114 @@
+{% extends "base.html" %}
+
+{% block title %}CodeLens — À propos du projet (L3 MIAGE / MIASHS){% endblock %}
+
+{% block content %}
+<div class="container about-container">
+
+    <div class="about-hero card">
+        <span class="about-badge">🎓 Cadre Universitaire</span>
+        <h1 class="about-title">À propos de <strong>CodeLens</strong></h1>
+        <p class="about-subtitle">
+            Projet conçu dans le cadre de la <strong>Licence 3 MIAGE / MIASHS</strong> à l'<strong>Université Toulouse III – Paul Sabatier</strong>.
+        </p>
+        <p class="about-desc">
+            CodeLens est une application web conçue pour apporter une analyse rapide, claire, visuelle et 100% factuelle de n'importe quel dépôt GitHub public, sans artifice inutile ni complexité superflue.
+        </p>
+    </div>
+
+    <!-- Objectifs Pédagogiques -->
+    <div class="card about-section">
+        <h2 class="subcard-title">🎯 Compétences mobilisées</h2>
+        <div class="skills-grid">
+            <div class="skill-item">
+                <span class="skill-icon">🐍</span>
+                <h4>Programmation Python & Flask</h4>
+                <p>Découpage en couches modulaires (services, base de données, vues Jinja2), gestion d'exceptions et architecture MVC propre.</p>
+            </div>
+            <div class="skill-item">
+                <span class="skill-icon">🌐</span>
+                <h4>Consommation d'API REST</h4>
+                <p>Requêtes HTTP sécurisées avec <code>requests</code>, pagination GitHub par en-têtes <code>Link</code>, gestion des quotas (Rate Limit) et format JSON.</p>
+            </div>
+            <div class="skill-item">
+                <span class="skill-icon">🗄️</span>
+                <h4>Persistance Relationnelle SQLite</h4>
+                <p>Création d'un schéma SQL propre, requêtes paramétrées contre les injections SQL, sérialisation JSON des synthèses pour relecture hors-ligne.</p>
+            </div>
+            <div class="skill-item">
+                <span class="skill-icon">📊</span>
+                <h4>Visualisation & Frontend Vanilla</h4>
+                <p>Interface responsive en CSS3 moderne (Flexbox & Grid), JavaScript pur sans framework lourd et graphiques interactifs avec Chart.js.</p>
+            </div>
+            <div class="skill-item">
+                <span class="skill-icon">🧪</span>
+                <h4>Tests & Qualité Logicielle</h4>
+                <p>Suite de tests automatisés avec <code>pytest</code> couvrant la détection des extensions, les règles de complexité, le parsing et les routes HTTP.</p>
+            </div>
+            <div class="skill-item">
+                <span class="skill-icon">🛡️</span>
+                <h4>Sécurité & Bonnes Pratiques</h4>
+                <p>Aucun token GitHub hardcodé, validation stricte des URLs, aucune exécution de code distant (analyse en lecture seule).</p>
+            </div>
+        </div>
+    </div>
+
+    <!-- Choix d'implémentation & Seuils de complexité -->
+    <div class="dashboard-grid-2">
+        <div class="card about-section">
+            <h2 class="subcard-title">⚙️ Seuils de complexité configurables</h2>
+            <p>Pour la détection des fichiers nécessitant une attention particulière, CodeLens utilise des règles déterministes et transparentes :</p>
+            <ul class="about-list">
+                <li>
+                    <strong>Longueur excessive :</strong> fichiers de plus de <code>{{ thresholds.line }}</code> lignes.
+                </li>
+                <li>
+                    <strong>Concentration de fonctions :</strong> fichiers contenant plus de <code>{{ thresholds.function }}</code> définitions de fonctions.
+                </li>
+                <li>
+                    <strong>Concentration de classes :</strong> fichiers contenant plus de <code>{{ thresholds.class }}</code> déclarations de classes.
+                </li>
+            </ul>
+            <p class="about-hint">Ces valeurs sont définies dans le module central <code>config.py</code> et peuvent être ajustées via variables d'environnement.</p>
+        </div>
+
+        <div class="card about-section">
+            <h2 class="subcard-title">🏛️ Architecture du projet</h2>
+            <pre class="ascii-architecture"><code>codelens/
+├── app.py                      # Routage Flask & Contrôleur
+├── config.py                   # Configuration & Seuils
+├── services/
+│   ├── github_service.py       # Client GitHub REST API
+│   ├── analyzer.py             # Structure, Langages & Règles
+│   ├── dependency_analyzer.py  # Dépendances (Py, JS, Java...)
+│   └── git_analyzer.py         # Métriques Git & Commits
+├── database/
+│   └── database.py             # Accès SQLite natif
+├── templates/                  # Vues HTML5 (Jinja2)
+├── static/                     # CSS3 & Chart.js
+└── tests/                      # Tests unitaires pytest</code></pre>
+        </div>
+    </div>
+
+    <!-- Fiche mémo pour la soutenance orale -->
+    <div class="card defense-card">
+        <div class="defense-badge">💡 Argumentaire pour la soutenance L3</div>
+        <h3 class="defense-title">Questions fréquentes du jury & réponses clés :</h3>
+        <div class="faq-list">
+            <div class="faq-item">
+                <strong>Pourquoi ne pas attribuer une note globale (ex: 15/20) au dépôt ?</strong>
+                <p>Une note unique sur du code est arbitraire et trompeuse. CodeLens privilégie un rapport 100% factuel et mesurable (nombre de fichiers, part des langages, présence de tests et de documentation), conformément à la rigueur scientifique attendue en MIASHS / MIAGE.</p>
+            </div>
+            <div class="faq-item">
+                <strong>Comment l'arborescence est-elle récupérée sans faire des centaines d'appels API ?</strong>
+                <p>Grâce à l'endpoint Git Trees de l'API GitHub (<code>/git/trees/{branch}?recursive=1</code>), l'intégralité des fichiers et dossiers est rapatriée en une unique requête HTTP, préservant ainsi les quotas d'API.</p>
+            </div>
+            <div class="faq-item">
+                <strong>Pourquoi du JavaScript Vanilla plutôt que React ?</strong>
+                <p>Pour un projet de L3, le JavaScript natif évite la surcharge d'un bundler (Webpack/Vite), reste 100% compréhensible ligne par ligne lors d'une soutenance, et s'intègre parfaitement avec le moteur de template natif de Flask (Jinja2).</p>
+            </div>
+        </div>
+    </div>
+
+</div>
+{% endblock %}

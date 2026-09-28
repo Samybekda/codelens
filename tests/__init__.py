@@ -1,0 +1,3 @@
+"""
+Tests automatisés pour CodeLens.
+"""
